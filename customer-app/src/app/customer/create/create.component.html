@@ -1,0 +1,17 @@
+<form [formGroup]="customerForm" (ngSubmit)="saveCustomer()">
+    <mat-form-field>
+      <input matInput formControlName="fullName" placeholder="Full Name">
+      <mat-error *ngIf="customerForm.get('fullName')?.hasError('required')">Full Name is required</mat-error>
+    </mat-form-field>
+  
+    <mat-form-field>
+      <input matInput [matDatepicker]="picker" formControlName="dateOfBirth" placeholder="Date of Birth" readonly>
+      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+      <mat-error *ngIf="customerForm.get('dateOfBirth')?.hasError('required')">Date of Birth is required</mat-error>
+      <mat-error *ngIf="customerForm.get('dateOfBirth')?.hasError('dateOfBirthInvalid')">Invalid date or Date of Birth cannot be greater than today</mat-error>
+    </mat-form-field>
+  
+    <button mat-raised-button color="primary" type="submit" [disabled]="!customerForm.valid">Save</button>
+  </form>
+  
