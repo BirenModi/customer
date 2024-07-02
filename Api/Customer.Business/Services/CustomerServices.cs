@@ -43,7 +43,12 @@ namespace Customer.Business.Services
             {
                 throw new Exception($"Customer with ID {customerId} not found");
             }
-            return _mapper.Map<Dto.Customer.Response.Customers>(customer);
+            return new Dto.Customer.Response.Customers
+            {
+                CustomerId = customerId,
+                FullName = customer.FullName,
+                DateOfBirth = customer.DateOfBirth
+            };
 
         }
 
@@ -54,7 +59,12 @@ namespace Customer.Business.Services
             {
                 throw new Exception($"Customer with age {age} not found");
             }
-            return _mapper.Map<List<Dto.Customer.Response.Customers>>(customer);
+            return customer.Select(x => new Dto.Customer.Response.Customers
+            {
+                CustomerId = x.CustomerId,
+                FullName = x.FullName,
+                DateOfBirth = x.DateOfBirth
+            }).ToList();
 
         }
 
@@ -65,7 +75,13 @@ namespace Customer.Business.Services
             {
                 throw new Exception("Customers not found");
             }
-            return _mapper.Map<List<Dto.Customer.Response.Customers>>(customer);
+
+            return customer.Select(x => new Dto.Customer.Response.Customers
+            {
+                CustomerId = x.CustomerId,
+                FullName = x.FullName,
+                DateOfBirth = x.DateOfBirth
+            }).ToList();
         }
 
         public async Task Update(UpdateCustomer customer)

@@ -1,4 +1,5 @@
-﻿using Customer.Business.Services;
+﻿using AutoMapper;
+using Customer.Business.Services;
 using Customer.Data.ICoreService;
 using Customer.Dto.Customer.Request;
 using Microsoft.Extensions.Configuration;
@@ -10,19 +11,6 @@ namespace Customer.Test
 {
     public class CustomerServicesTests
     {
-        private readonly Mock<ICoreCustomerServices> _mockCoreServices;
-        private readonly Mock<HttpClient> _mockHttpClient;
-        private readonly Mock<IConfiguration> _mockConfiguration;
-        private readonly CustomerServices _customerServices;
-
-        public CustomerServicesTests()
-        {
-            _mockCoreServices = new Mock<ICoreCustomerServices>();
-            _mockHttpClient = new Mock<HttpClient>();
-            _mockConfiguration = new Mock<IConfiguration>();
-
-            _customerServices = new CustomerServices(_mockCoreServices.Object, _mockHttpClient.Object, _mockConfiguration.Object);
-        }
 
         [Fact]
         public async Task Create_ValidCustomer_CreatesCustomerWithProfileImage()
@@ -55,8 +43,21 @@ namespace Customer.Test
                             .Returns(Task.CompletedTask);
 
             var mockConfiguration = new Mock<IConfiguration>();
+            mockConfiguration.Setup(x => x["ProfileImage"]).Returns("https://ui-avatars.com/api/?name={FULL_NAME}&format=svg");
 
-            var customerServices = new CustomerServices(mockCoreServices.Object, httpClient, mockConfiguration.Object);
+            var mockMapper = new Mock<IMapper>();
+            mockMapper
+            .Setup(m => m.Map<Customer.Data.Model.Customers>(It.IsAny<Customers>()))
+            .Returns((Customers source) => new Customer.Data.Model.Customers
+            {
+                CustomerId = source.CustomerId.Value,
+                FullName = source.FullName,
+                DateOfBirth = source.DateOfBirth,
+                ProfileImage = source.ProfileImage
+            });
+
+
+            var customerServices = new CustomerServices(mockCoreServices.Object, httpClient, mockConfiguration.Object, mockMapper.Object);
 
             // Act
             await customerServices.Create(customers);
@@ -96,8 +97,11 @@ namespace Customer.Test
             var mockCoreServices = new Mock<ICoreCustomerServices>();
 
             var mockConfiguration = new Mock<IConfiguration>();
+            mockConfiguration.Setup(x => x["ProfileImage"]).Returns("https://ui-avatars.com/api/?name={FULL_NAME}&format=svg");
 
-            var customerServices = new CustomerServices(mockCoreServices.Object, httpClient, mockConfiguration.Object);
+            var mockMapper = new Mock<IMapper>();
+
+            var customerServices = new CustomerServices(mockCoreServices.Object, httpClient, mockConfiguration.Object, mockMapper.Object);
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => customerServices.Create(customers));
@@ -119,7 +123,9 @@ namespace Customer.Test
             mockCoreServices.Setup(core => core.GetCustomer(customerId))
                             .ReturnsAsync(coreCustomer);
 
-            var customerServices = new CustomerServices(mockCoreServices.Object, null, null);
+            var mockMapper = new Mock<IMapper>();
+
+            var customerServices = new CustomerServices(mockCoreServices.Object, null, null, mockMapper.Object);
 
             // Act
             var result = await customerServices.GetCustomer(customerId);
@@ -141,7 +147,7 @@ namespace Customer.Test
             mockCoreServices.Setup(core => core.GetCustomer(customerId))
                             .ThrowsAsync(new Exception("Exception"));
 
-            var customerServices = new CustomerServices(mockCoreServices.Object, null, null);
+            var customerServices = new CustomerServices(mockCoreServices.Object, null, null, null);
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => customerServices.GetCustomer(customerId));
@@ -172,7 +178,7 @@ namespace Customer.Test
             mockCoreServices.Setup(core => core.GetCustomerByAge(age))
                             .ReturnsAsync(coreCustomers);
 
-            var customerServices = new CustomerServices(mockCoreServices.Object, null, null);
+            var customerServices = new CustomerServices(mockCoreServices.Object, null, null, null);
 
             // Act
             var result = await customerServices.GetCustomerByAge(age);
@@ -199,7 +205,7 @@ namespace Customer.Test
             mockCoreServices.Setup(core => core.GetCustomerByAge(age))
                             .ReturnsAsync(new List<Customer.Data.Model.Customers>());
 
-            var customerServices = new CustomerServices(mockCoreServices.Object, null, null);
+            var customerServices = new CustomerServices(mockCoreServices.Object, null, null, null);
 
             // Act
             var result = await customerServices.GetCustomerByAge(age);
@@ -233,7 +239,7 @@ namespace Customer.Test
             mockCoreServices.Setup(core => core.GetCustomers())
                             .ReturnsAsync(coreCustomers);
 
-            var customerServices = new CustomerServices(mockCoreServices.Object, null, null);
+            var customerServices = new CustomerServices(mockCoreServices.Object, null, null, null);
 
             // Act
             var result = await customerServices.GetCustomers();
@@ -259,7 +265,7 @@ namespace Customer.Test
             mockCoreServices.Setup(core => core.GetCustomers())
                             .ReturnsAsync(new List<Customer.Data.Model.Customers>());
 
-            var customerServices = new CustomerServices(mockCoreServices.Object, null, null);
+            var customerServices = new CustomerServices(mockCoreServices.Object, null, null, null);
 
             // Act
             var result = await customerServices.GetCustomers();
@@ -293,7 +299,7 @@ namespace Customer.Test
                             .ReturnsAsync(existingCustomer);
 
 
-            var customerServices = new CustomerServices(mockCoreServices.Object, null, null);
+            var customerServices = new CustomerServices(mockCoreServices.Object, null, null, null);
 
             // Act
             await customerServices.Update(updateCustomer);
@@ -320,7 +326,7 @@ namespace Customer.Test
             mockCoreServices.Setup(core => core.GetCustomer(customerId))
                             .ReturnsAsync((Customer.Data.Model.Customers)null);
 
-            var customerServices = new CustomerServices(mockCoreServices.Object, null, null);
+            var customerServices = new CustomerServices(mockCoreServices.Object, null, null, null);
 
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => customerServices.Update(updateCustomer));
@@ -348,7 +354,7 @@ namespace Customer.Test
             mockCoreServices.Setup(core => core.GetCustomer(customerId))
                             .ReturnsAsync(existingCustomer);
 
-            var customerServices = new CustomerServices(mockCoreServices.Object, null, null);
+            var customerServices = new CustomerServices(mockCoreServices.Object, null, null, null);
 
             // Act
             await customerServices.Update(updateCustomer);
@@ -375,7 +381,7 @@ namespace Customer.Test
             mockCoreServices.Setup(core => core.GetCustomer(customerId))
                             .ThrowsAsync(new Exception("Exception"));
 
-            var customerServices = new CustomerServices(mockCoreServices.Object, null, null);
+            var customerServices = new CustomerServices(mockCoreServices.Object, null, null, null);
 
             // Act & Assert
             await Assert.ThrowsAsync<Exception>(() => customerServices.Update(updateCustomer));
